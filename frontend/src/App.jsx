@@ -7,13 +7,14 @@ import SuperAdminDashboard from './components/superadmin/SuperAdminDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import TechnicianDashboard from './components/technician/TechnicianDashboard';
 import CustomerDashboard from './components/customer/CustomerDashboard';
+import LandingPage from './components/landing/LandingPage';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register/:role" element={<Register />} />
 

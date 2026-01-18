@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const UserModel = require('./models/customer_reg');
 const ComplaintModel = require('./models/complaint');
+const FeedbackModel = require('./models/feedback');
 
 // Stripe init via environment variable
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -28,6 +29,22 @@ app.post('/login', async (req, res) => {
 
         if (!email || !password) {
             return res.status(400).json({ message: 'Email and password are required' });
+        }
+
+        // Check if it's superadmin login using default credentials
+        if (email === process.env.SUPERADMIN_EMAIL && password === process.env.SUPERADMIN_PASSWORD) {
+            return res.json({
+                message: 'Login successful',
+                user: {
+                    id: 'superadmin-001',
+                    name: 'Super Administrator',
+                    email: process.env.SUPERADMIN_EMAIL,
+                    phone: 'N/A',
+                    address: 'System',
+                    city: 'All',
+                    role: 'superadmin',
+                },
+            });
         }
 
         const user = await UserModel.findOne({ email });
@@ -139,9 +156,9 @@ app.post('/register', (req, res) => {
 // Create complaint endpoint
 app.post('/complaints/create', async (req, res) => {
     try {
-        const { customerEmail, customerName, customerPhone, customerCity, title, description, category, priority } = req.body;
+        const { customerEmail, customerName, customerPhone, customerCity, title, description, category, priority, timeSlot } = req.body;
 
-        if (!customerEmail || !title || !description || !category || !priority) {
+        if (!customerEmail || !title || !description || !category || !priority || !timeSlot) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
@@ -160,6 +177,7 @@ app.post('/complaints/create', async (req, res) => {
             description,
             category,
             priority,
+            timeSlot,
             status: 'open'
         });
 
@@ -515,6 +533,91 @@ app.post('/payments/stripe/confirm', async (req, res) => {
     } catch (err) {
         console.error('Error confirming Stripe payment:', err);
         return res.status(500).json({ message: 'Error confirming payment', error: err.message });
+    }
+});
+
+// Customer feedback: create feedback entry (only when complaint is resolved, before payment)
+app.post('/feedbacks/create', async (req, res) => {
+    try {
+        const { userId, userEmail, userName, userRole = 'customer', rating, comment, complaintId } = req.body;
+
+        if (!userId || !userEmail || !userName || !rating || !comment || !complaintId) {
+            return res.status(400).json({ message: 'userId, userEmail, userName, rating, comment, and complaintId are required' });
+        }
+
+        const numericRating = Number(rating);
+        if (Number.isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+            return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+        }
+
+        const complaint = await ComplaintModel.findById(complaintId);
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
+        }
+
+        if (complaint.customerId.toString() !== userId.toString()) {
+            return res.status(403).json({ message: 'You can only give feedback on your own complaint' });
+        }
+
+        if (complaint.status !== 'resolved') {
+            return res.status(400).json({ message: 'Feedback can be submitted only when complaint is resolved and before payment' });
+        }
+
+        const existing = await FeedbackModel.findOne({ complaintId, userId });
+        if (existing) {
+            return res.status(400).json({ message: 'Feedback already submitted for this complaint' });
+        }
+
+        const feedback = await FeedbackModel.create({
+            userId,
+            userEmail,
+            userName,
+            userRole,
+            complaintId,
+            complaintTitle: complaint.title,
+            rating: numericRating,
+            comment
+        });
+
+        return res.json({ message: 'Feedback submitted successfully', feedback });
+    } catch (err) {
+        console.error('Error submitting feedback:', err);
+        return res.status(500).json({ message: 'Error submitting feedback', error: err.message });
+    }
+});
+
+// Customer feedback: fetch feedbacks for a specific customer
+app.get('/feedbacks/customer/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { email } = req.query;
+
+        const filters = [];
+        if (userId) {
+            filters.push({ userId });
+        }
+        if (email) {
+            filters.push({ userEmail: email });
+        }
+
+        const criteria = filters.length > 0 ? { $or: filters } : {};
+        const feedbacks = await FeedbackModel.find(criteria).sort({ createdAt: -1 });
+
+        return res.json(feedbacks);
+    } catch (err) {
+        console.error('Error fetching customer feedbacks:', err);
+        return res.status(500).json({ message: 'Error fetching feedbacks', error: err.message });
+    }
+});
+
+// Super Admin: fetch all feedbacks
+app.get('/feedbacks', async (_req, res) => {
+    try {
+        const feedbacks = await FeedbackModel.find({}).sort({ createdAt: -1 });
+        return res.json(feedbacks);
+    } catch (err) {
+        console.error('Error fetching all feedbacks:', err);
+        return res.status(500).json({ message: 'Error fetching feedbacks', error: err.message });
     }
 });
 

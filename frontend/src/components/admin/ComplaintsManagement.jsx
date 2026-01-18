@@ -203,6 +203,10 @@ const ComplaintsManagement = () => {
                       <span className="font-semibold">City:</span>{' '}
                       {complaint.customerCity}
                     </div>
+                    <div>
+                      <span className="font-semibold">Preferred Slot:</span>{' '}
+                      {complaint.timeSlot || 'Not set'}
+                    </div>
                   </div>
 
                   <div className="flex justify-end">
@@ -296,6 +300,10 @@ const ComplaintsManagement = () => {
                       >
                         {complaint.status === 'taken' ? 'Taken by You' : complaint.status}
                       </span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Preferred Slot:</span>{' '}
+                      {complaint.timeSlot || 'Not set'}
                     </div>
                   </div>
 

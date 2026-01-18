@@ -1,34 +1,38 @@
 import { useState, useEffect } from 'react';
-import { STORAGE_KEYS, getFromStorage } from '../../utils/localStorage';
+import axios from 'axios';
 
 const FeedbacksList = () => {
   const [feedbacks, setFeedbacks] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const allFeedbacks = getFromStorage(STORAGE_KEYS.FEEDBACKS) || [];
-    const allUsers = getFromStorage(STORAGE_KEYS.USERS) || [];
-    setFeedbacks(allFeedbacks);
-    setUsers(allUsers);
-  };
-
-  const getUserName = (userId) => {
-    const user = users.find((u) => u.id === userId);
-    return user ? user.name : 'Unknown User';
-  };
-
-  const getUserRole = (userId) => {
-    const user = users.find((u) => u.id === userId);
-    return user ? user.role : 'Unknown';
+  const loadData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.get('http://localhost:3000/feedbacks');
+      setFeedbacks(response.data || []);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Unable to load feedbacks';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Feedbacks</h2>
+
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -59,6 +63,9 @@ const FeedbacksList = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Complaint
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Customer
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -67,20 +74,31 @@ const FeedbacksList = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Feedback
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {feedbacks.map((feedback) => (
-                <tr key={feedback.id}>
+              {loading && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                    Loading feedbacks...
+                  </td>
+                </tr>
+              )}
+              {!loading && feedbacks.map((feedback) => (
+                <tr key={feedback._id || feedback.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {getUserName(feedback.userId)}
+                      {feedback.complaintTitle || 'Complaint'}
+                    </div>
+                    <div className="text-sm text-gray-500">ID: {feedback.complaintId}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {feedback.userName || 'Unknown User'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {getUserRole(feedback.userId)}
+                      {feedback.userRole || 'customer'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -101,9 +119,9 @@ const FeedbacksList = () => {
                   </td>
                 </tr>
               ))}
-              {feedbacks.length === 0 && (
+              {!loading && feedbacks.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
                     No feedbacks found
                   </td>
                 </tr>

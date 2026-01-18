@@ -194,6 +194,7 @@ const ComplaintCard = ({ complaint, onView, onStart, onResolve, loading }) => {
             <div>Assigned on: {assignedDate ? new Date(assignedDate).toLocaleString() : 'N/A'}</div>
             <div>Customer: {complaint.customerName} ({complaint.customerPhone})</div>
             <div>City: {complaint.customerCity}</div>
+            <div>Preferred Slot: {complaint.timeSlot || 'Not set'}</div>
           </div>
         </div>
 
@@ -261,6 +262,7 @@ const DetailsModal = ({ complaint, onClose, onStart, onResolve, loading }) => {
           <InfoBox label="Admin" value={complaint.assignedTo?.adminName || 'Unknown'} />
           <InfoBox label="Customer" value={`${complaint.customerName} (${complaint.customerPhone})`} />
           <InfoBox label="City" value={complaint.customerCity} />
+          <InfoBox label="Preferred Slot" value={complaint.timeSlot || 'Not set'} />
           <InfoBox label="Assigned On" value={complaint.technicianAssigned?.assignedAt ? new Date(complaint.technicianAssigned.assignedAt).toLocaleString() : 'N/A'} />
         </div>
 

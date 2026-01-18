@@ -47,6 +47,12 @@ const ComplaintSchema = new mongoose.Schema({
         enum: ['low', 'medium', 'high', 'urgent'],
         default: 'medium'
     },
+    // Customer preferred technician visit window
+    timeSlot: {
+        type: String,
+        required: true,
+        default: 'Anytime'
+    },
 
     // Payment
     totalAmount: {

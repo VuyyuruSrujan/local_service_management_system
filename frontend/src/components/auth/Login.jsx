@@ -29,7 +29,8 @@ const Login = () => {
         navigate('/customer/dashboard', { replace: true });
         break;
       default:
-        navigate('/', { replace: true });
+        // Don't redirect if role is unknown, just stay on login
+        break;
     }
   }, [currentUser, navigate]);
 
@@ -57,7 +58,8 @@ const Login = () => {
           navigate('/customer/dashboard');
           break;
         default:
-          navigate('/');
+          // If role is unknown, navigate to customer dashboard as fallback
+          navigate('/customer/dashboard');
       }
     } else {
       setError(result.error);
@@ -146,12 +148,12 @@ const Login = () => {
           <div className="text-sm text-center space-y-2">
             <p className="text-gray-600">Don't have an account?</p>
             <div className="grid grid-cols-2 gap-2">
-              <Link
-                to="/register/superadmin"
+              <button
+                onClick={() => setError('Super Admin login uses default credentials. Contact system owner for access.')}
                 className="font-medium text-purple-600 hover:text-purple-500 px-3 py-2 border border-purple-300 rounded-md hover:bg-purple-50 transition-colors"
               >
-                Register as Super Admin
-              </Link>
+                Login as Super Admin
+              </button>
               <Link
                 to="/register/admin"
                 className="font-medium text-blue-600 hover:text-blue-500 px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
@@ -172,14 +174,6 @@ const Login = () => {
               </Link>
             </div>
           </div>
-
-          {/* <div className="mt-6 p-4 bg-blue-50 rounded-md">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Demo Credentials:</p>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Super Admin:</strong> superadmin@app.com / super123</p>
-              <p><strong>Admin:</strong> admin@city1.com / admin123</p>
-            </div>
-          </div> */}
         </form>
       </div>
     </div>

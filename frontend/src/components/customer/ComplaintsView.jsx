@@ -18,7 +18,16 @@ const ComplaintsView = () => {
     description: '',
     category: 'other',
     priority: 'medium',
+    timeSlot: '09:00 - 11:00',
   });
+
+  const timeSlotOptions = [
+    '09:00 - 11:00',
+    '11:00 - 13:00',
+    '13:00 - 15:00',
+    '15:00 - 17:00',
+    '17:00 - 19:00',
+  ];
 
   useEffect(() => {
     loadComplaints();
@@ -90,6 +99,7 @@ const ComplaintsView = () => {
         description: formData.description,
         category: formData.category,
         priority: formData.priority,
+        timeSlot: formData.timeSlot,
       };
 
       await axios.post('http://localhost:3000/complaints/create', complaintData);
@@ -102,6 +112,7 @@ const ComplaintsView = () => {
         description: '',
         category: 'other',
         priority: 'medium',
+        timeSlot: '09:00 - 11:00',
       });
       
       loadComplaints();
@@ -212,6 +223,10 @@ const ComplaintsView = () => {
                 <div className="flex justify-between">
                   <span className="font-semibold text-gray-700">Complaint ID:</span>
                   <span className="text-gray-600 font-mono text-xs">{complaint._id.slice(-8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-700">Preferred Time Slot:</span>
+                  <span className="text-gray-600">{complaint.timeSlot || 'Not set'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-semibold text-gray-700">Submitted:</span>
@@ -327,6 +342,25 @@ const ComplaintsView = () => {
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Preferred Time Slot
+                </label>
+                <select
+                  name="timeSlot"
+                  value={formData.timeSlot}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {timeSlotOptions.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {slot}
+                    </option>
+                  ))}
                 </select>
               </div>
 
